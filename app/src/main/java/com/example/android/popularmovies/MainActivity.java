@@ -74,21 +74,24 @@ public class MainActivity extends AppCompatActivity
 
         mMovieAdapter = new MovieAdapter(this);
         mFavoriteAdapter = new FavoriteAdapter(this);
-        mRecyclerView.setAdapter(mMovieAdapter);
 
         mLoadingIndicator = (ProgressBar) findViewById(R.id.pb_loading_indicator);
         if(savedInstanceState!=null){
             movieDataURL = savedInstanceState.getString(MOVIE_DATA_URL);
             sortOrder = savedInstanceState.getString(SORT_ORDER);
+            Bundle queryBundle = new Bundle();
+            queryBundle.putString(MOVIE_DATA_URL, movieDataURL);
+            queryBundle.putString(SORT_ORDER, sortOrder);
+
             if(sortOrder.equals("popular")){
                 setTitle("Popular");
-                getSupportLoaderManager().restartLoader(MOVIE_LOADER, null, movieResultLoaderListener);
                 mRecyclerView.setAdapter(mMovieAdapter);
+                getSupportLoaderManager().restartLoader(MOVIE_LOADER, queryBundle, movieResultLoaderListener);
             }
             else if(sortOrder.equals("top_rated")) {
                 setTitle("Top-Rated");
-                getSupportLoaderManager().restartLoader(MOVIE_LOADER, null, movieResultLoaderListener);
                 mRecyclerView.setAdapter(mMovieAdapter);
+                getSupportLoaderManager().restartLoader(MOVIE_LOADER, queryBundle, movieResultLoaderListener);
             }
             else{
                 setTitle("Favorites");
@@ -100,8 +103,10 @@ public class MainActivity extends AppCompatActivity
         else{
             sortOrder = "popular";
             setTitle("Popular");
-            if(isOnline())
+            if(isOnline()) {
+                mRecyclerView.setAdapter(mMovieAdapter);
                 loadMovieData();
+            }
             else{
                 showErrorMessage();
             }
@@ -114,8 +119,8 @@ public class MainActivity extends AppCompatActivity
     private void loadMovieData() {
         Bundle queryBundle = new Bundle();
 
-        URL movieDataUrl = NetworkUtils.buildUrl(sortOrder);
-        queryBundle.putString(MOVIE_DATA_URL, movieDataUrl.toString());
+        movieDataURL = NetworkUtils.buildUrl(sortOrder).toString();
+        queryBundle.putString(MOVIE_DATA_URL, movieDataURL);
         queryBundle.putString(SORT_ORDER, sortOrder);
 
         android.support.v4.app.LoaderManager loaderManager = getSupportLoaderManager();
@@ -162,6 +167,7 @@ public class MainActivity extends AppCompatActivity
                 @Override
                 public String loadInBackground() {
                     String dataURL = args.getString(MOVIE_DATA_URL);
+                    Log.d(TAG, "DATA URL " + dataURL);
 
                     if (dataURL == null || TextUtils.isEmpty(dataURL)) {
                         return null;
